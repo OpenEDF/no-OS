@@ -240,6 +240,29 @@ static int ad9081_parse_jesd_link_dt(struct dt_properties ps, struct ad9081_jesd
 	return 0;
 }
 
+static int ad9081_parse_dt(struct dt_properties ps, struct ad9081_phy *phy)
+{
+	int ret;
+
+	ps.dflt = 1;
+	phy->multidevice_instance_count = dt_value(ps, "multidevice-instance-count");
+
+	ps.dflt = -1;
+	phy->config_sync_01_swapped = dt_value(ps, "adi,jesd-sync-pins-01-swap-enable");
+	phy->config_sync_0a_cmos_en = dt_value(ps, "adi,jesd-sync-pin-0a-cmos-enable");
+
+	ps.dflt = 0;
+	phy->lmfc_delay = dt_value(ps, "adi,lmfc-delay-dac-clk-cycles");
+	phy->nco_sync_ms_extra_lmfc_num = dt_value(ps, "adi,nco-sync-ms-extra-lmfc-num");
+
+	return 0;
+}
+
+static int ad9081_parse_dt_tx(struct dt_properties ps, struct ad9081_phy *phy)
+{
+
+}
+
 int main(void)
 {
 	struct clk app_clk[MULTIDEVICE_INSTANCE_COUNT];
@@ -435,13 +458,43 @@ int main(void)
 					    (phy[i]->jesd_tx_link.jesd_param.jesd_duallink > 0 ? 2 : 1);
 	}
 
+	phy[0]->ad9081.serdes_info = (adi_ad9081_serdes_settings_t) {
+		.ser_settings = { /* txfe jtx */
+			.lane_settings = {
+				{.swing_setting = AD9081_SER_SWING_850, .pre_emp_setting = AD9081_SER_PRE_EMP_0DB, .post_emp_setting = AD9081_SER_POST_EMP_0DB},
+				{.swing_setting = AD9081_SER_SWING_850, .pre_emp_setting = AD9081_SER_PRE_EMP_0DB, .post_emp_setting = AD9081_SER_POST_EMP_0DB},
+				{.swing_setting = AD9081_SER_SWING_850, .pre_emp_setting = AD9081_SER_PRE_EMP_0DB, .post_emp_setting = AD9081_SER_POST_EMP_0DB},
+				{.swing_setting = AD9081_SER_SWING_850, .pre_emp_setting = AD9081_SER_PRE_EMP_0DB, .post_emp_setting = AD9081_SER_POST_EMP_0DB},
+				{.swing_setting = AD9081_SER_SWING_850, .pre_emp_setting = AD9081_SER_PRE_EMP_0DB, .post_emp_setting = AD9081_SER_POST_EMP_0DB},
+				{.swing_setting = AD9081_SER_SWING_850, .pre_emp_setting = AD9081_SER_PRE_EMP_0DB, .post_emp_setting = AD9081_SER_POST_EMP_0DB},
+				{.swing_setting = AD9081_SER_SWING_850, .pre_emp_setting = AD9081_SER_PRE_EMP_0DB, .post_emp_setting = AD9081_SER_POST_EMP_0DB},
+				{.swing_setting = AD9081_SER_SWING_850, .pre_emp_setting = AD9081_SER_PRE_EMP_0DB, .post_emp_setting = AD9081_SER_POST_EMP_0DB},
+			},
+			.invert_mask = 0x00,
+			.lane_mapping = { { 0, 1, 2, 3, 4, 5, 6, 7}, { 0, 1, 2, 3, 4, 5, 6, 7 } }, /* link0, link1 */
+		},
+		.des_settings = { /* txfe jrx */
+			.boost_mask = 0xff,
+			.invert_mask = 0x00,
+			.ctle_filter = { 2, 2, 2, 2, 2, 2, 2, 2 },
+			.lane_mapping =  { { 0, 1, 2, 3, 4, 5, 6, 7 }, { 0, 1, 2, 3, 4, 5, 6, 7} }, /* link0, link1 */
+		}
+	};
+
+
 // ##################################################### JESD FRAMEWORK #####################################################
-	struct dt_properties link_tx_ps, link_rx_ps;
+	struct dt_properties link_tx_ps, link_rx_ps, trx0_ad9081_ps;
+	dt_init(&trx0_ad9081_ps, trx0_ad9081_ps_init, ARRAY_SIZE(trx0_ad9081_ps_init), 0);
 	dt_init(&link_tx_ps, link_tx_ps_init, ARRAY_SIZE(link_tx_ps_init), 0);
 	dt_init(&link_rx_ps, link_rx_ps_init, ARRAY_SIZE(link_rx_ps_init), 0);
 
-	ad9081_parse_jesd_link_dt(link_tx_ps, &phy[0]->jesd_tx_link, true);
-	ad9081_parse_jesd_link_dt(link_tx_ps, &phy[0]->jesd_rx_link[0], false);
+	ad9081_parse_dt(trx0_ad9081_ps, &phy[0]);
+	ad9081_parse_dt_tx(link_tx_ps, &phy[0]);
+	//ad9081_parse_dt_rx(link_rx_ps, &phy[0]);
+
+	/* More here */
+	//ad9081_parse_jesd_link_dt(link_tx_ps, &phy[0]->jesd_tx_link, true);
+	//ad9081_parse_jesd_link_dt(link_rx_ps, &phy[0]->jesd_rx_link[0], false);
 
 	struct jesd204_link link0 = {
 				.name = "link0-tx",

@@ -73,6 +73,10 @@ struct dac_settings_cache {
 struct ad9081_phy {
 	spi_desc		*spi_desc;
 	gpio_desc		*gpio_reset;
+	gpio_desc		*rx1_en_gpio;
+	gpio_desc		*rx2_en_gpio;
+	gpio_desc		*tx1_en_gpio;
+	gpio_desc		*tx2_en_gpio;
 	struct clk		*jesd_rx_clk;
 	struct clk		*jesd_tx_clk;
 	struct clk		*dev_clk;
@@ -81,6 +85,7 @@ struct ad9081_phy {
 	struct ad9081_jesd_link	jesd_rx_link[2];
 	uint32_t	multidevice_instance_count;
 	bool		config_sync_01_swapped;
+	bool		config_sync_0a_cmos_en;
 	uint32_t	lmfc_delay;
 	uint32_t	nco_sync_ms_extra_lmfc_num;
 	/* TX */
